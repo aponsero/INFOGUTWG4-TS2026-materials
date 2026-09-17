@@ -1,0 +1,560 @@
+---
+title: "Basic R Course - Session 1 - Student Copy"
+output: html_document
+---
+
+# BASIC R COURSE  -  SESSION 1        *** STUDENT COPY ***
+## First steps: variables, vectors, classes and data frames
+
+ How to use this file:
+   - Follow along while we go through it together.
+   - Put the cursor on a line and press Ctrl + Enter
+     (Cmd + Enter on Mac) to run that line.
+   - Anything starting with # is a comment: R ignores it.
+   - Where you see  "# > your answer:"  the code is yours to
+     write. There is space left underneath for it.
+   - Save this file in your working folder. It is your
+     notes for the day.
+
+## 0. BEFORE WE START: THE WORKING DIRECTORY
+
+ R is always "standing" in some folder. When you ask it for a
+ file, it looks there. This is the number one problem for
+ beginners.
+
+ What to do, once, at the start:
+   1) Decide your working directory (where you want to work)
+   2) Open RStudio and create a script:
+      File -> New File -> R Script, and save it in that folder
+   3) RStudio menu: Session -> Set Working Directory ->
+      To Source File Location
+
+```{r}
+getwd()          # which folder am I in?
+```
+
+```{r}
+list.files()     # what is in this folder?
+```
+
+### Changing folder by hand
+Replace the path with the one on YOUR computer:
+
+```{r}
+# setwd("C:/Users/your_user/.../curso_R_datos")
+```
+
+CAREFUL ON WINDOWS: copying a path gives you backslashes \
+  WRONG  "C:\Users\alba\curso_R_datos"
+  RIGHT  "C:/Users/alba/curso_R_datos"
+  RIGHT  "C:\\Users\\alba\\curso_R_datos"
+
+## 1. R IS A CALCULATOR
+
+```{r}
+2 + 2
+10 / 4
+3 ^ 2          # power
+sqrt(16)       # square root
+```
+
+## 2. STORING THINGS IN VARIABLES
+   The arrow  <-  means "store this here".
+   Keyboard shortcut: Alt + minus sign
+
+```{r}
+weight <- 70
+height <- 1.75
+weight          # typing the name shows its content
+```
+
+### MINI EXERCISE
+Compute the body mass index (weight divided by height squared)
+and store it in a variable called  bmi
+  you need:  the ^ operator  and  <-
+
+> your answer:
+
+```{r}
+
+```
+
+Names are case sensitive: Weight and weight are different.
+Use short names, without spaces or accents.
+
+## 3. VECTORS: several values in a single variable
+   Built with c()  (for "combine")
+
+```{r}
+numbers <- c(1, 2, 3, 4, 5)
+numbers
+```
+
+```{r}
+names_list <- c("Ana", "Luis", "Marta")
+names_list
+```
+
+A very handy shortcut: a colon generates a sequence
+
+```{r}
+1:5
+10:15
+```
+
+How many elements does a vector have
+
+```{r}
+length(numbers)
+```
+
+## 4. POSITIONS: pulling out specific elements
+   Square brackets [ ] are used. IMPORTANT: in R counting
+   starts at 1, not at 0.
+
+```{r}
+numbers <- 1:5
+numbers
+```
+
+```{r}
+numbers[1]        # the first one
+numbers[3]        # the third one
+numbers[2:4]      # from the second to the fourth
+numbers[c(1, 5)]  # the first and the fifth
+numbers[-1]       # ALL BUT the first
+```
+
+You can also select by condition
+
+```{r}
+numbers[numbers > 3]
+```
+
+## 5. OPERATIONS ON THE WHOLE VECTOR AT ONCE
+   This is one of the great advantages of R.
+
+```{r}
+numbers
+numbers + 5        # adds 5 to EACH value
+numbers * 2
+```
+
+Summary functions
+
+```{r}
+mean(numbers)      # mean
+sd(numbers)        # standard deviation
+min(numbers)
+max(numbers)
+sum(numbers)
+round(mean(numbers), 1)   # round to 1 decimal
+```
+
+```{r}
+summary(numbers)   # the whole summary in one go
+```
+
+### EXERCISE 1
+Create a vector called  marks  with the values 7, 8, 5, 9, 6.
+Then compute its mean rounded to 2 decimals, and its
+standard deviation.
+
+  you need:  c()   mean()   round()   sd()
+
+> your answer:
+
+```{r}
+
+```
+
+## 6. DATA TYPES: the class() function
+   Knowing the type of a column prevents 90% of the errors.
+
+```{r}
+class(numbers)      # "numeric"   -> numbers
+class(names_list)   # "character" -> text
+class(TRUE)         # "logical"   -> true / false
+```
+
+Comparisons: questions with a yes/no answer
+
+```{r}
+numbers > 3         # gives TRUE / FALSE for each element
+sum(numbers > 3)    # TRUE counts as 1: how many are above 3
+```
+
+A typical mistake: if you mix text and numbers, EVERYTHING
+becomes text
+
+```{r}
+mixed <- c(1, 2, "three")
+mixed
+class(mixed)            # "character"  <- careful!
+```
+
+## 7. COUNTING CATEGORIES: the table() function
+
+```{r}
+sex   <- c("M", "F", "F", "M", "F")
+group <- c("control", "treated", "control", "treated", "control")
+```
+
+```{r}
+table(sex)
+table(group)
+```
+
+table() also cross-tabulates two variables
+
+```{r}
+table(sex, group)
+```
+
+### EXERCISE 2
+Create a vector  days  with
+"monday","tuesday","monday","monday","tuesday","wednesday"
+and count how many times each day appears.
+
+  you need:  c()   table()
+
+> your answer:
+
+```{r}
+
+```
+
+## 8. DATA FRAMES: the table of R
+   This is what we will use from now on. Each column is a
+   vector, and they must all have the same length.
+
+```{r}
+patients <- data.frame(
+  name  = c("Ana", "Luis", "Marta", "Jorge"),
+  age   = c(34, 45, 29, 52),
+  group = c("control", "treated", "control", "treated")
+)
+```
+
+```{r}
+patients
+```
+
+### Exploring a data frame: ALWAYS the first thing to do
+
+```{r}
+nrow(patients)     # number of ROWS    (= samples)
+ncol(patients)     # number of COLUMNS (= variables)
+dim(patients)      # rows and columns in one go
+names(patients)    # the column names
+str(patients)      # structure: the type of each column
+head(patients, 2)  # the first 2 rows
+tail(patients, 2)  # the last 2 rows
+summary(patients)  # a summary of each column
+```
+
+### Accessing a column: the $ symbol
+
+```{r}
+patients$age
+mean(patients$age)
+table(patients$group)
+```
+
+### Accessing by position: [row, column]
+
+```{r}
+patients[1, ]        # the whole row 1
+patients[, 2]        # the whole column 2
+patients[1, 2]       # row 1, column 2
+patients[1:2, ]      # the first two rows
+```
+
+### Filtering rows by a condition
+
+```{r}
+patients[patients$age > 40, ]
+patients[patients$group == "control", ]
+```
+
+  Careful: to compare you use a DOUBLE equals sign  ==
+  A single  =  means something else.
+
+### Creating a new column
+
+```{r}
+patients$age_months <- patients$age * 12
+patients
+```
+
+### EXERCISE 3
+Using the data frame  patients:
+  a) how many rows and columns does it have
+  b) the mean age
+  c) keep only the rows of the "treated" group
+
+  you need:  dim()   mean()   $   [ , ]   ==
+
+> your answer:
+
+```{r}
+
+```
+
+### EXERCISE 4 (recap)
+Create a data frame  plants  with:
+  pot:     1, 2, 3, 4, 5, 6
+  water:   "low","low","low","high","high","high"
+  height:  12, 15, 11, 22, 25, 20
+Then:
+  a) look at its structure
+  b) how many pots there are of each watering level
+  c) the mean height of the pots with "high" watering
+
+  you need:  data.frame()   str()   table()   mean()   $   [ ]
+
+> your answer:
+
+```{r}
+
+```
+
+## 9. ASKING FOR HELP
+
+```{r}
+?mean            # opens the help page of a function
+help(round)
+```
+
+And if you do not even know the name of the function, search
+the internet for "how to ... in R". That is what everybody
+does, always.
+
+## PART 2 OF THE SESSION: OUR OWN DATA
+
+## 10. THE EXPERIMENT WE ARE GOING TO ANALYSE
+
+ Two food products (dairy fermentates, in powder form) were
+ tested to see whether they could help control blood glucose.
+ Each product went through three stages:
+
+   1) Artificial DIGESTION in the lab (mouth, stomach,
+      intestine), to simulate what would happen if eaten.
+   2) FERMENTATION with human gut bacteria for 24 h. The
+      bacteria transform the product and produce organic
+      acids, mainly SHORT CHAIN FATTY ACIDS (butyric,
+      propionic, acetic).
+   3) The resulting liquid is put in contact with human
+      PANCREATIC CELLS and the INSULIN they release is
+      measured.
+
+ HYPOTHESIS: if a product makes the bacteria produce more
+ butyric and propionic acid, the cells should release more
+ insulin.
+
+ CONDITIONS (3):
+   Control  ->  the bacteria with no product added
+   A        ->  product A (high in lactose, low in protein)
+   B        ->  product B (very high in protein, no lactose)
+
+ REPLICATES (2 per condition): each condition was fermented
+ in TWO independent vessels, R1 and R2. These are BIOLOGICAL
+ REPLICATES: two real repetitions of the experiment.
+
+   Control_R1   Control_R2
+   A_R1         A_R2
+   B_R1         B_R2      -> 6 samples in total
+
+ MEASUREMENTS. Careful, because they are not all taken at
+ the same stage of the pipeline:
+
+   acids and bacteria  ->  measured ONCE in each vessel.
+                           6 vessels = 6 measurements.
+
+   insulin             ->  the liquid from each vessel was
+                           put on the beta cells on 3
+                           SEPARATE OCCASIONS, using a
+                           different batch of cells each
+                           time (column "experiment").
+                           6 vessels x 3 = 18 measurements.
+
+ So the 3 experiments are NOT 3 new fermentations: they are
+ the SAME fermented liquid measured three times. They tell us
+ how repeatable the CELL ASSAY is, not how repeatable the
+ BIOLOGY is. Telling those two things apart is one of the
+ goals of this course.
+
+## 11. READING A CSV FILE
+
+ A CSV is a text file where values are separated by commas.
+ You can open it with Notepad. The function is read.csv()
+
+ "input/acids.csv" means: inside the folder I am standing
+ in, go into input and take acids.csv. This is better than
+ writing the full path, because then the script works on any
+ computer.
+
+```{r}
+acids     <- read.csv("input/acids.csv")
+insulin   <- read.csv("input/insulin.csv")
+abundance <- read.csv("input/abundance.csv")
+```
+
+### input/acids.csv
+The six organic acids measured in each sample, in ug/ml.
+One row per sample.
+
+```{r}
+acids
+str(acids)
+dim(acids)
+names(acids)
+summary(acids)
+```
+
+```{r}
+table(acids$product)
+sum(is.na(acids))       # any missing values? (should be 0)
+```
+
+### input/insulin.csv
+Insulin released by the cells, in ng per million cells and
+hour. 6 samples x 3 experiments = 18 rows.
+
+```{r}
+head(insulin)
+nrow(insulin)
+table(insulin$product, insulin$experiment)
+```
+
+### input/abundance.csv
+Which bacteria were in each sample, as a % of the total.
+All 190 species detected in the study, one per row.
+
+```{r}
+dim(abundance)
+head(abundance)
+```
+
+CAREFUL: 190 rows. Typing  abundance  on its own floods the
+console. With big tables you look at them like this instead.
+
+Two things worth knowing about this table:
+
+1) The columns do NOT add up to exactly 100:
+
+```{r}
+colSums(abundance[, -1])
+```
+
+   Why? To find out which bacteria are in a sample, its DNA is
+   sequenced and the pieces are compared against a database of
+   known species. Some pieces do not match anything and stay
+   UNCLASSIFIED, so they cannot appear in the table: we do not
+   know which species they belong to. Each column therefore
+   adds up to  100 - (% of unclassified reads), which in this
+   study ranges from 0% to 12.3%. It is not an error.
+
+   Note the  [, -1]  : it drops the first column (species),
+   which is text. colSums() cannot add up words.
+
+2) Some species are 0 in all six samples. They were in the
+   original study, which had 26 samples, but not in ours.
+
+```{r}
+sum(rowSums(abundance[, -1]) == 0)
+```
+
+### input/taxonomy.csv
+The record card of each species: kingdom, phylum, class,
+order, family and genus. 190 rows, in the same order as
+abundance.csv, so the two tables can be matched up.
+
+```{r}
+taxonomy <- read.csv("input/taxonomy.csv")
+head(taxonomy)
+dim(taxonomy)
+```
+
+How many species belong to each phylum
+
+```{r}
+table(taxonomy$phylum)
+```
+
+All the species of the genus Bifidobacterium
+
+```{r}
+taxonomy[taxonomy$genus == "Bifidobacterium", ]
+```
+
+### EXERCISE 5
+Using what you learned in the first part (no dplyr yet):
+  a) pull out the butyric column of  acids
+  b) compute the mean butyric acid of the 6 samples
+  c) keep only the rows of product "B"
+
+  you need:  $   mean()   [ , ]   ==
+
+> your answer:
+
+```{r}
+
+```
+
+### EXERCISE 6
+Which sample has the MOST butyric acid?
+Hint: use max() and then a condition.
+
+  you need:  max()   ==   [ , ]
+
+> your answer:
+
+```{r}
+
+```
+
+## 12. SAVING RESULTS: THE output FOLDER
+
+   Golden rule: the input files are NEVER modified.
+   Everything R produces goes into output.
+
+Example: we save a small table
+
+```{r}
+only_B <- acids[acids$product == "B", ]
+write.csv(only_B, "output/product_B_only.csv", row.names = FALSE)
+```
+
+```{r}
+list.files("output")
+```
+
+row.names = FALSE stops R from adding a column with 1,2,3...
+
+### EXERCISE 7
+Save a file called  acids_control.csv  in output, containing
+only the Control rows.
+
+  you need:  $   [ , ]   ==   write.csv()   list.files()
+
+> your answer:
+
+```{r}
+
+```
+
+## END OF SESSION 1
+
+ What to take away:
+   <-           store something in a variable
+   c()          build a vector
+   [ ]          positions
+   class()      what type of data it is
+   table()      count categories
+   data.frame   the table
+   $            one column
+   str/nrow/head/summary   LOOK at the data before analysing
+   read.csv("input/file.csv")     read data
+   write.csv(..., "output/...")   save results
+   Never touch the input files

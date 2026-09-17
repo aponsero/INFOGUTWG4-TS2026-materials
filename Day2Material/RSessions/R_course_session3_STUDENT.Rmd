@@ -1,0 +1,343 @@
+---
+title: "Basic R Course - Session 3"
+subtitle: "Relative abundance, diversity and simple statistics"
+output:
+  html_document:
+    toc: true
+    toc_depth: 2
+    theme: flatly
+---
+
+```{r setup, include=FALSE}
+# Run the chunks interactively during the class.
+knitr::opts_chunk$set(eval = FALSE)
+```
+
+**How to use this notebook**
+
+- Run each chunk with the green “play” button.
+- Complete the three sections labelled **your answer**.
+- Every exercise makes a small change to code already explained.
+
+# 0. Packages and inputs
+
+```{r}
+# Run only if the packages are not installed:
+# install.packages(c("dplyr", "ggplot2", "vegan"))
+# install.packages("BiocManager")
+# BiocManager::install("phyloseq")
+
+library(dplyr)
+library(ggplot2)
+library(phyloseq)
+library(vegan)
+
+abundance <- read.csv("input/abundance.csv", check.names = FALSE)
+taxonomy  <- read.csv("input/taxonomy.csv", check.names = FALSE)
+
+dim(abundance)
+head(abundance)
+head(taxonomy)
+```
+
+# 1. Create the phyloseq object
+
+A phyloseq object combines abundance, taxonomy and sample information.
+
+```{r}
+# Abundance matrix: rows = species; columns = samples
+abundance_matrix <- as.matrix(abundance[, -1])
+rownames(abundance_matrix) <- abundance$species
+
+abundance_matrix[1:5, ]
+colSums(abundance_matrix)   # approximately 100% per sample
+```
+
+```{r}
+# Taxonomy matrix
+taxonomy_matrix <- as.matrix(
+  taxonomy[, c("kingdom", "phylum", "class", "order",
+               "family", "genus", "species")]
+)
+rownames(taxonomy_matrix) <- taxonomy$species
+```
+
+```{r}
+# Sample metadata
+metadata <- data.frame(
+  sample = colnames(abundance_matrix),
+  product = c("Control", "Control", "A", "A", "B", "B"),
+  replicate = c("R1", "R2", "R1", "R2", "R1", "R2")
+)
+
+metadata$product <- factor(metadata$product,
+                           levels = c("Control", "A", "B"))
+rownames(metadata) <- metadata$sample
+
+# Combine the three parts
+ps <- phyloseq(
+  otu_table(abundance_matrix, taxa_are_rows = TRUE),
+  tax_table(taxonomy_matrix),
+  sample_data(metadata)
+)
+ps
+```
+
+# 2. Relative abundance and a t-test
+
+Relative abundance is the **percentage of the community** occupied by a taxon. A value of 10 means approximately 10% of the sample, not ten bacterial cells.
+
+We compare *Blautia wexlerae* between Control and product A.
+
+```{r}
+abundance_long <- psmelt(ps)
+
+blautia <- filter(abundance_long,
+                  OTU == "Blautia wexlerae",
+                  product %in% c("Control", "A"))
+blautia$product <- droplevels(blautia$product)
+blautia
+```
+
+```{r}
+# Look at the group means
+blautia_groups <- group_by(blautia, product)
+summarise(blautia_groups,
+          mean_abundance = mean(Abundance))
+```
+
+```{r}
+ggplot(blautia,
+       aes(x = product, y = Abundance, color = product)) +
+  geom_point(size = 3) +
+  stat_summary(fun = mean, geom = "point",
+               shape = 18, size = 5, color = "black") +
+  labs(title = "Relative abundance of Blautia wexlerae",
+       subtitle = "Black diamond = group mean",
+       x = "Product",
+       y = "Relative abundance (%)") +
+  theme_minimal() +
+  theme(legend.position = "none")
+```
+
+A t-test compares one numerical variable between two groups.
+
+- H0: the two population means are equal
+- H1: the two population means are different
+
+```{r}
+t_blautia <- t.test(Abundance ~ product, data = blautia)
+t_blautia
+```
+
+Find the p-value. Is it below 0.05?
+
+> Your notes:
+>
+
+With only two samples per group, this is an exploratory teaching example.
+
+# 3. Community composition
+
+One stacked bar represents one complete sample. Each colour is the relative abundance of one taxon.
+
+## Teacher example: family level
+
+```{r}
+# These two values control the graph
+rank_to_plot <- "family"
+number_to_show <- 10
+```
+
+```{r}
+# Group species at the selected rank
+ps_rank <- tax_glom(ps, taxrank = rank_to_plot)
+composition_long <- psmelt(ps_rank)
+
+# Select the taxonomy column called "family"
+composition_long$Taxon <- as.character(
+  composition_long[[rank_to_plot]]
+)
+
+# Find the most abundant families
+taxon_means <- group_by(composition_long, Taxon)
+taxon_means <- summarise(taxon_means,
+                         mean_abundance = mean(Abundance),
+                         .groups = "drop")
+taxon_means <- arrange(taxon_means, desc(mean_abundance))
+top_taxa <- head(taxon_means$Taxon, number_to_show)
+```
+
+```{r}
+# Combine the remaining families as "Other"
+composition_long$Taxon <- ifelse(
+  composition_long$Taxon %in% top_taxa,
+  composition_long$Taxon,
+  "Other"
+)
+
+composition_plot_data <- group_by(
+  composition_long, Sample, product, Taxon
+)
+composition_plot_data <- summarise(
+  composition_plot_data,
+  Abundance = sum(Abundance),
+  .groups = "drop"
+)
+
+composition_plot_data$Sample <- factor(
+  composition_plot_data$Sample,
+  levels = metadata$sample
+)
+```
+
+```{r}
+ggplot(composition_plot_data,
+       aes(x = Sample, y = Abundance, fill = Taxon)) +
+  geom_col() +
+  facet_grid(~ product, scales = "free_x", space = "free_x") +
+  labs(title = paste("Microbial composition at",
+                     rank_to_plot, "level"),
+       subtitle = paste("Top", number_to_show,
+                        "taxa; all others are Other"),
+       x = "Sample",
+       y = "Relative abundance (%)",
+       fill = rank_to_plot) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+Why does every bar total approximately 100%?
+
+> Your notes:
+>
+
+## Exercise 1: species level
+
+Change the graph from the top 10 families to the top **15 species**. Fill in two values and rerun all the composition chunks.
+
+```{r}
+# > your answer:
+rank_to_plot <- "________"
+number_to_show <- __
+```
+
+# 4. Alpha diversity
+
+Alpha diversity describes the microbial community **within one sample**.
+
+- `Observed`: number of detected species
+- `Shannon`: considers richness and how evenly abundances are distributed
+
+```{r}
+alpha <- data.frame(
+  sample = colnames(abundance_matrix),
+  Observed = colSums(abundance_matrix > 0),
+  Shannon = vegan::diversity(t(abundance_matrix),
+                             index = "shannon")
+)
+
+alpha <- left_join(alpha, metadata, by = "sample")
+alpha
+```
+
+`Observed` is detected richness, not Chao1. It counts species with an abundance above zero.
+
+## Exercise 2: t-test on Shannon
+
+Repeat the Control-versus-A t-test using Shannon diversity. Replace both blanks with the name of the correct column.
+
+```{r}
+alpha_CA <- filter(alpha,
+                   product %in% c("Control", "A"))
+alpha_CA$product <- droplevels(alpha_CA$product)
+
+# Calculate the group means
+alpha_groups <- group_by(alpha_CA, product)
+summarise(alpha_groups,
+          mean_Shannon = mean(________))
+
+# Run the t-test
+t_shannon <- t.test(________ ~ product, data = alpha_CA)
+t_shannon
+```
+
+Is the p-value below 0.05?
+
+> Your notes:
+>
+
+## Teacher example: observed richness
+
+```{r}
+ggplot(alpha,
+       aes(x = product, y = Observed, color = product)) +
+  stat_summary(fun.min = min, fun.max = max,
+               geom = "linerange", color = "grey60") +
+  geom_point(size = 3) +
+  stat_summary(fun = mean, geom = "point",
+               shape = 18, size = 5, color = "black") +
+  labs(title = "Observed species richness",
+       subtitle = "Black diamond = mean; grey line = range",
+       x = "Product",
+       y = "Observed species") +
+  theme_minimal() +
+  theme(legend.position = "none")
+```
+
+## Exercise 3: Shannon plot
+
+Copy the previous plot by completing these three blanks.
+
+```{r}
+# > your answer:
+ggplot(alpha,
+       aes(x = product, y = ________, color = product)) +
+  stat_summary(fun.min = min, fun.max = max,
+               geom = "linerange", color = "grey60") +
+  geom_point(size = 3) +
+  stat_summary(fun = mean, geom = "point",
+               shape = 18, size = 5, color = "black") +
+  labs(title = "________________",
+       subtitle = "Black diamond = mean; grey line = range",
+       x = "Product",
+       y = "________________") +
+  theme_minimal() +
+  theme(legend.position = "none")
+```
+
+# 5. Beta diversity: a brief PCoA
+
+Alpha diversity describes one sample. Beta diversity asks **how different the complete communities are between samples**.
+
+Bray-Curtis calculates the distances. PCoA represents them on two axes:
+
+- nearby points have more similar communities
+- separated points have more different communities
+
+```{r}
+pcoa <- ordinate(ps, method = "PCoA", distance = "bray")
+
+plot_ordination(ps, pcoa, type = "samples",
+                color = "product") +
+  geom_point(size = 4) +
+  labs(title = "PCoA of Bray-Curtis distances",
+       subtitle = "Closer samples have more similar compositions",
+       color = "Product") +
+  theme_minimal()
+```
+
+Which samples are close? Which sample appears most different?
+
+> Your notes:
+>
+
+PCoA is a visualisation, not a statistical test.
+
+# Take-home message
+
+- Relative abundance is the percentage occupied by one taxon.
+- A t-test compares one numerical variable between two groups.
+- Composition can be shown at different taxonomic ranks.
+- Alpha diversity describes one sample.
+- Beta diversity compares complete communities between samples.
