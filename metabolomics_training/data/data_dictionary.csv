@@ -1,0 +1,10 @@
+variable,role,description,unit,analytical_method
+sample,identifier,Unique identifier for each training sample,not applicable,not applicable
+product,metadata,Experimental condition: Control A or B,not applicable,not applicable
+replicate,metadata,Replicate number within each product,not applicable,not applicable
+formic,measurement,Formic acid,not provided,HPLC
+acetic,measurement,Acetic acid,not provided,HPLC
+propionic,measurement,Propionic acid,not provided,HPLC
+lactic,measurement,Lactic acid,not provided,HPLC
+butyric,measurement,Butyric acid,not provided,HPLC
+citric,measurement,Citric acid,not provided,HPLC

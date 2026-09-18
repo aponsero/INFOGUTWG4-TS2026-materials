@@ -1,0 +1,30 @@
+project:
+  type: website
+  output-dir: docs
+  render:
+    - index.qmd
+    - session/metabolomics_session_guide.qmd
+    - slides/metabolomics_introduction.qmd
+
+website:
+  title: "Introduction to Metabolomics Data"
+  navbar:
+    left:
+      - href: index.qmd
+        text: Home
+      - href: session/metabolomics_session_guide.qmd
+        text: Session guide
+      - href: slides/metabolomics_introduction.qmd
+        text: Slides
+  page-footer:
+    center: "Training materials by Anna Mascellani"
+
+format:
+  html:
+    theme: cosmo
+    toc: true
+    link-external-newwindow: true
+
+execute:
+  freeze: auto
+
