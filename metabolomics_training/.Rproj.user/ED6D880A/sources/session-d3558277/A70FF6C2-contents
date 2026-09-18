@@ -1,0 +1,335 @@
+---
+title: "Introduction to Metabolomics Data"
+subtitle: "From colon-model samples to a data matrix"
+author: "Anna Mascellani Bergo, Czech University of Life Sciences Prague"
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    code-fold: true
+    code-tools: true
+    number-sections: true
+    embed-resources: true
+execute:
+  warning: false
+  message: false
+  freeze: auto
+---
+
+## Session overview {.unnumbered}
+
+**Central question**
+
+> How do samples from a colon model become a metabolomics data matrix, and what must we check before interpreting it?
+
+This 70-minute session introduces metabolomics data to participants with little or no previous experience. It follows the complete journey from a *in vitro* colon model sample to a processed data table and uses a small, real colon-model dataset as an accessible example.
+
+[Open the accompanying slides](../slides/metabolomics_introduction.html)
+
+### Learning outcomes
+
+By the end of the session, participants should be able to:
+
+1.  Explain what metabolomics measures and how it complements microbiome sequencing.
+2.  Distinguish targeted, semi-targeted and untargeted metabolomics.
+3.  Recognise the main analytical platforms and the types of signals they generate.
+4.  Describe how analytical signals are converted into a processed data matrix.
+5.  Recognise metadata, measurement and annotation tables.
+6.  Identify essential checks required before biological interpretation.
+
+## 1. What information does a colon model produce?
+
+A colon-model experiment can produce several layers of data. These may include:
+
+-   Experimental metadata: treatment, concentration, incubation time and replicate.
+-   Microbiome data: taxa, genes and metabolic pathways.
+-   Metabolite data: substrates consumed and products formed during fermentation.
+-   Phenotypic or functional measurements.
+
+:::: {.callout-tip title="Instructor cue"}
+> If we know which microorganisms are present, why do we also need to measure metabolites?
+
+-   **Presence does not mean activity:** A microorganism may be present in the community but metabolically inactive under the experimental conditions.
+
+-   **Potential does not confirm production:** A community may contain microorganisms and genes associated with butyrate production, but only measuring butyrate shows whether it was produced and accumulated.
+
+-   **Similar communities can behave differently:** Two samples with similar microbial compositions may produce different metabolite profiles because of differences in substrate availability, microbial interactions or environmental conditions.
+
+::: {.callout-tip title="Functional potential versus observed phenotype"}
+Microbiome sequencing describes the community's **functional potential**, while metabolomics measures its **observed chemical phenotype**.
+:::
+::::
+
+## 2. What does metabolomics measure?
+
+Metabolites are small molecules that participate in, or result from, biochemical reactions. They can originate from the experimental substrate, microbial metabolism, host metabolism or interactions among these sources.
+
+> **Metabolomics** is the systematic measurement of small molecules in biological samples.
+
+Metabolomics is close to the observable phenotype because metabolite concentrations can change in response to microbial activity, diet, environmental conditions and experimental treatment.
+
+### Metabolomics and microbiome sequencing
+
+| Microbiome sequencing | Metabolomics |
+|------------------------------------|------------------------------------|
+| Which microorganisms and genes are present? | Which small molecules are present? |
+| What could the community potentially do? | What chemical activity can be observed? |
+| Describes composition and functional potential | Describes the measured metabolic phenotype |
+
+The two layers are complementary. However, the presence of a metabolite does not by itself identify the organism that produced it. Similarly, the presence of a metabolic gene does not prove that the corresponding pathway was active.
+
+## 3. Targeted, semi-targeted and untargeted metabolomics
+
+The appropriate analytical strategy depends on the scientific question.
+
+| Approach | Main purpose | Typical output | Identification | Quantification |
+|---------------|---------------|---------------|---------------|---------------|
+| **Targeted** | Measure a predefined group of metabolites | A small or moderate panel | Usually confirmed using standards | Often absolute |
+| **Semi-targeted** | Measure a defined panel or selected chemical classes | Tens to hundreds of variables | Mixed confidence | Absolute or relative |
+| **Untargeted** | Detect as many reproducible signals as possible | Hundreds to thousands of features | Many signals initially unknown | Commonly relative |
+
+### Features, annotations and identified metabolites
+
+These terms are not interchangeable:
+
+-   A **feature** is a reproducible analytical signal.
+-   An **annotated metabolite** has a proposed identity supported by available evidence.
+-   An **identified metabolite** has stronger confirmation, commonly through comparison with an authentic standard.
+-   A **quantified metabolite** has been measured using a suitable calibration procedure and can be reported in concentration units.
+
+## 4. Analytical platforms: different signals, similar tables
+
+Different analytical platforms detect different parts of the metabolome and generate different types of raw signals.
+
+| Platform | Simplified description | Typical strength |
+|------------------------|------------------------|------------------------|
+| **NMR spectroscopy** | Detects characteristic resonance signals from molecules in a magnetic field | Reproducibility and quantitative performance |
+| **LC–MS** | Separates compounds and detects ions according to mass-to-charge ratio | Sensitivity and broad chemical coverage |
+| **GC–MS** | Separates volatile or derivatised compounds before mass detection | Strong chromatographic resolution |
+| **HPLC** | Separates compounds and measures them with a suitable detector | Robust targeted measurement |
+
+No single platform measures every metabolite. Metabolites differ in concentration, polarity, volatility, stability and ionisation behaviour.
+
+Despite the differences in raw data, the processed output commonly becomes a table in which:
+
+-   Rows represent samples.
+-   Columns represent metabolites or analytical features.
+-   Cells contain concentrations or signal intensities.
+
+## 5. From analytical signal to processed matrix
+
+```{mermaid}
+flowchart LR
+    A["Colon-model sample"] --> B["Sample preparation"]
+    B --> C["Analytical measurement"]
+    C --> D["Signals or peaks"]
+    D --> E["Processing and identification"]
+    E --> F["Metabolomics data matrix"]
+```
+
+### Step 1: the biological sample
+
+The data journey begins before the instrument. Sampling time, storage, preparation and experimental design can all influence the measured profile.
+
+Questions to record include:
+
+-   Which treatment was applied?
+-   What was the concentration?
+-   When was the sample collected?
+-   What does each replicate represent?
+-   Which samples are controls, blanks or quality controls?
+
+### Step 2: analytical measurement
+
+The instrument records signals rather than a ready-made list of metabolite concentrations. Depending on the platform, these signals may be chromatographic peaks, mass spectral features or NMR resonances.
+
+### Step 3: processing
+
+The raw signals must be processed. Possible steps include peak detection, alignment, integration, blank correction, normalisation, identification and quantification.
+
+### Step 4: the three linked data tables
+
+#### Sample metadata
+
+Describes the experimental observations.
+
+| sample     | product | replicate |
+|------------|---------|----------:|
+| Control_R1 | Control |         1 |
+| Control_R2 | Control |         2 |
+| A_R1       | A       |         1 |
+
+#### Measurement matrix
+
+Contains measured concentrations or signal intensities.
+
+| sample     |   formic |   acetic | propionic |   lactic | butyric |  citric |
+|------------|---------:|---------:|----------:|---------:|--------:|--------:|
+| Control_R1 | 34660.87 | 2485.879 |   305.614 | 4585.646 | 398.641 | 640.505 |
+| Control_R2 | 35620.77 | 2367.957 |   567.952 | 4379.197 | 584.875 | 659.495 |
+
+#### Annotation table
+
+Describes the measured variables.
+
+| variable | metabolite | chemical class | unit | analytical method |
+|---------------|---------------|---------------|---------------|---------------|
+| acetic | Acetic acid | Organic acid / SCFA | To be completed | HPLC |
+| propionic | Propionic acid | Organic acid / SCFA | To be completed | HPLC |
+
+### Checks before interpretation
+
+Before analysing biological differences, ask:
+
+1.  Are all expected samples present?
+2.  Are sample identifiers unique and consistent across files?
+3.  What do the replicates represent?
+4.  Are the values concentrations or relative intensities?
+5.  Are the measurement units recorded?
+6.  Are blanks, calibration standards and quality-control samples available?
+7.  Are there missing, zero or extreme values?
+8.  Have the data already been corrected, transformed or normalised?
+9.  Is the apparent treatment difference larger than replicate variation?
+10. Does the experimental design support the intended conclusion?
+
+## 6. Live demonstration with the colon-model dataset
+
+The training dataset is a **targeted HPLC organic-acid dataset**. It contains six measured acids, including the short-chain fatty acids acetate, propionate and butyrate.
+
+The demonstration uses six samples representing Control, product A and product B, with two replicates per product. Six organic acids were measured by HPLC.
+
+The purpose is not to perform formal hypothesis testing. It is to show how to inspect, restructure and visualise a metabolite data matrix.
+
+
+
+### 6.1 Load and inspect the data
+
+```{r}
+library(tidyverse)
+
+acids <- read_csv("../data/acids.csv")
+
+glimpse(acids)
+count(acids, product)
+```
+
+Ask the group to identify:
+
+-   The sample identifier.
+-   The experimental condition.
+-   The replicate indicator.
+-   The metabolite measurements.
+
+### 6.2 Convert the matrix to long format
+
+```{r}
+acid_names <- c(
+  "formic", "acetic", "propionic",
+  "lactic", "butyric", "citric"
+)
+
+acids_long <- acids |>
+  pivot_longer(
+    cols = all_of(acid_names),
+    names_to = "acid",
+    values_to = "value"
+  )
+
+acids_long
+```
+
+In the wide matrix, every metabolite has its own column. In the long table, each row contains one sample–metabolite measurement. Long format is particularly convenient for faceted plotting and grouped summaries.
+
+Detailed teaching of `pivot_longer()` is reserved for Tuesday. During this session, focus on why the data representation changes.
+
+### 6.3 Visualise all observations
+
+```{r}
+ggplot(acids_long, aes(x = product, y = value, colour = product)) +
+  geom_point(
+    size = 3,
+    position = position_jitter(width = 0.05, height = 0)
+  ) +
+  stat_summary(
+    fun = mean,
+    geom = "crossbar",
+    width = 0.35,
+    colour = "black"
+  ) +
+  facet_wrap(~acid, scales = "free_y") +
+  labs(
+    title = "Organic-acid profiles across the three products",
+    subtitle = "Individual replicates are shown; black lines indicate means",
+    x = NULL,
+    y = "Measured value"
+  ) +
+  theme_bw() +
+  theme(legend.position = "none")
+```
+
+Why use separate y-axis scales? Formic acid has much larger numerical values than several other acids. A single shared scale would make the variation in lower-abundance acids difficult to see.
+
+::: {.callout-warning title="Interpretation limit"}
+There are only two replicates per product. The plot can reveal observed patterns and replicate agreement, but it does not establish statistically supported treatment effects.
+:::
+
+## 7. Interpretation exercise
+
+Work in pairs for approximately five minutes. Use the faceted plot generated in the demonstration.
+
+### Questions
+
+1.  Which acids appear to differ most strongly among Control, A and B?
+2.  Which product appears to have the highest propionate and butyrate values?
+3.  For which product and acid do the replicates appear least consistent?
+4.  What additional metadata would you want before interpreting the measurements?
+5.  Can we conclude that the products caused statistically significant changes?
+6.  What additional replication would strengthen the study?
+
+
+::: {.callout-note collapse="true" title="Discussion guide"}
+Product B shows markedly higher observed propionate and butyrate values and much lower lactate values than the Control. Product A is intermediate for several acids. The difference between the two A replicates is relatively noticeable for butyrate and lactate.
+
+These are descriptive observations. With only two replicates per condition—and without first clarifying whether they are biological, vessel or technical replicates—the data do not support strong inferential claims.
+:::
+
+## 8. Closing summary
+
+### Five take-home messages
+
+1.  **Metabolomics measures the small-molecule phenotype and complements sequencing data.**
+2.  **Targeted, semi-targeted and untargeted methods answer different questions.**
+3.  **Different analytical platforms generate different signals but similar downstream data structures.**
+4.  **A measurement matrix must be interpreted together with metadata, analytical information and quality checks.**
+5.  **A visible difference is not automatically a statistically supported effect.**
+
+### Connection to Tuesday
+
+Tuesday's sessions will develop the computational skills used briefly here:
+
+-   Reading data into R.
+-   Working with data frames.
+-   Reshaping and manipulating data.
+-   Visualising biological measurements.
+-   Selecting statistical methods appropriate to the experimental design.
+
+## Resources and repository structure
+
+Recommended repository structure:
+
+``` text
+metabolomics-training/
+├── README.md
+├── slides/
+│   └── metabolomics-introduction.html
+├── session/
+│   └── metabolomics-session-guide.qmd
+├── data/
+│   ├── acids.csv
+│   └── data_dictionary.csv
+├── R/
+│   └── metabolomics-demo.R
+└── figures/
+```
+
+ANNA'S NOTE: The slides should link to this guide, and this guide should link back to the slides. A QR code on the first and final slides can direct participants to the rendered guide on GitHub Pages.

@@ -1,0 +1,33 @@
+---
+title: "Introduction to Metabolomics Data"
+subtitle: "From colon-model samples to a data matrix"
+---
+
+## Training session
+
+This 70-minute introductory session follows one central question:
+
+> How do samples from a colon model become a metabolomics data matrix, and what must we check before interpreting it?
+
+The materials use a small targeted HPLC dataset from an in-vitro colon-model experiment. No previous metabolomics experience is required.
+
+## Materials
+
+- [Open the presentation](slides/metabolomics_introduction.html)
+- [Read the complete session guide](session/metabolomics_session_guide.html)
+- [Download the organic-acid dataset](data/acids.csv)
+
+## Learning outcomes
+
+By the end of the session, participants should be able to:
+
+1. Explain what metabolomics measures and how it complements microbiome sequencing.
+2. Distinguish targeted, semi-targeted and untargeted metabolomics.
+3. Recognise the main analytical platforms and their downstream data structures.
+4. Describe how analytical signals become a processed data matrix.
+5. Identify the metadata and quality checks needed before interpretation.
+
+## Software
+
+The live demonstration uses R and the `tidyverse` package. Participants can read the rendered materials without installing R.
+
