@@ -235,7 +235,7 @@ cd ~
 pwd
 ```
 
-`~` is a shortcut meaning **your home folder**. Note the full address `pwd` gives you, it starts with `/`, so it's absolute.
+`~` or empty space is a shortcut meaning **your home folder**. Note the full address `pwd` gives you, it starts with `/`, so it's absolute.
 
 Now reach the same destination two different ways.
 
