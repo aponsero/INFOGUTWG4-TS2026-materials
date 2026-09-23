@@ -33,6 +33,7 @@ library(phyloseq)
 library(vegan)
 
 abundance <- read.csv("input/abundance.csv", check.names = FALSE)
+abundance <- abundance[-which(rowSums(abundance) == 0), ] # Remove taxa with no observations
 taxonomy  <- read.csv("input/taxonomy.csv", check.names = FALSE)
 
 dim(abundance)
