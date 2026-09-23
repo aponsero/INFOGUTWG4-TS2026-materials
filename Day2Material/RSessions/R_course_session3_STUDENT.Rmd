@@ -238,7 +238,7 @@ alpha <- data.frame(
                              index = "shannon")
 )
 
-alpha <- left_join(alpha, metadata, by = "sample")
+alpha <- dplyr::left_join(alpha, metadata, by = "sample")
 alpha
 ```
 
