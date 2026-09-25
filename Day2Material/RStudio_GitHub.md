@@ -23,7 +23,9 @@ git config --global user.name "Your Name"
 git config --global user.email "your_email@example.com" 
 ```
 
-3.  Authentication: GitHub no longer accepts account passwords for Git operations. Thus, we need to generate a Personal Access Token (PAT):
+3.  Authentication: GitHub no longer accepts account passwords for Git operations. Thus, we need to generate a Personal Access Token (PAT)
+
+    - Run these lines in the RStudio R Console to create and save the PAT:
 
 ```         
 install.packages("usethis")
@@ -84,7 +86,13 @@ head(colnames(acids))
 
 Remember, that well written code also includes inline comments which inform the user on what different parts of the code are for.
 
-### 5. The Git Workflow in RStudio (Save \> Stage \> Commit \> Push)
+### 5. The Git Workflow in RStudio 
+
+We first need to initialize a new repository from RStudio. There is a simple command for this, which we need to run in the Console:
+
+```
+usethis::use_github()
+```
 
 We can utilize the RStudio's visual Git Tab to update the contents of our repository on GitHub:
 
@@ -92,6 +100,8 @@ We can utilize the RStudio's visual Git Tab to update the contents of our reposi
 2.  Stage: Open the Git tab, click the checkboxes next to .gitignore, the .Rproj file, and analysis.R.
 3.  Commit: Click the "Commit" button. Write a short, descriptive message in the box on the right side (e.g., "initial commit: add data loading script"). Click the "Commit" button.
 4.  Push: Click the green "Push" arrow. Close both windows.
+
+(Save \> Stage \> Commit \> Push)
 
 This workflow should also work in the future. Everything that's inside your project's working directory can be uploaded easily like this to GitHub.
 
