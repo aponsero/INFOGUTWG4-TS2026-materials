@@ -1,0 +1,270 @@
+---
+title: "Basic R Course - Session 4"
+subtitle: "Advanced data objects - TreeSummarizedExperiment and miaverse"
+output:
+  html_document:
+    toc: true
+    toc_depth: 2
+    theme: flatly
+---
+
+```{r setup, include=FALSE}
+# Run the chunks interactively during the class.
+knitr::opts_chunk$set(eval = FALSE)
+```
+
+**How to use this notebook**
+
+- Run each chunk with the green “play” button.
+- Complete the two Excercise sections with your code.
+- The first exercise makes a small change to code already explained. For the second one, you have to first identify and copy the relevant code snippet from the examples provided.
+
+# 0. Packages and inputs
+
+```{r}
+# Run only if the packages are not installed:
+# install.packages("BiocManager")
+# BiocManager::install("phyloseq", "mia")
+
+
+library(phyloseq)
+library(mia)
+library(TreeSummarizedExperiment)
+library(miaViz)
+library(ComplexHeatmap)
+library(scater)
+library(patchwork)
+```
+
+# 1. Reading in raw data
+
+Microbiome data can come in many different formats. Similarly to phyloseq, we can read in data from various sources as .csv files. However, we first have to make sure they are correctly formatted before they can be included in the TSE object.
+
+Let's read in an abundance table and the taxonomy table and check their correct formatting. We'll also construct the sample data (here it's called "metadata") similarly to the previous workshop.
+
+```{r}
+# The abundance table should be a numeric matrix with feature IDs as rownames and sample IDs as column names
+abundance <- read.csv("input/abundance.csv", check.names = FALSE)
+str(abundance)
+head(rownames(abundance))
+head(colnames(abundance))
+
+# The printouts show that we need to move the feature IDs (taxa names) to the rownames, and convert the object to the matrix format
+rownames(abundance) <- abundance$species
+abundance <- as.matrix(abundance[-1])
+# This command also removes the first column ("species"), since we don't need it and it's a character vector
+
+# The taxonomy table should be a data.frame (or a DataFrame), where rownames should match the rownames of the abundance table. The colnames have no limitations, but 
+taxonomy  <- read.csv("input/taxonomy.csv", check.names = FALSE)
+str(taxonomy)
+head(rownames(taxonomy))
+taxonomy <- taxonomy[, c("kingdom", "phylum", "class", "order",
+               "family", "genus", "species")] # This is to se the taxonomy table in the correct order
+
+
+# The printouts show that we need to again move the feature IDs (taxa names) to the rownames
+rownames(taxonomy) <- taxonomy$species
+
+# We'll make sure that the rownames match before merging
+identical(rownames(abundance), rownames(taxonomy))
+
+# Constructing sample metadata. Here the rownames should match the colnames of the abundance table.
+metadata <- data.frame(
+  sample = colnames(abundance),
+  product = c("Control", "Control", "A", "A", "B", "B"),
+  replicate = c("R1", "R2", "R1", "R2", "R1", "R2")
+)
+
+metadata$product <- factor(metadata$product,
+                           levels = c("Control", "A", "B"))
+rownames(metadata) <- metadata$sample
+
+
+# And now we can construct a (minimal) TreeSE object
+tse_taxa <- TreeSummarizedExperiment(
+    assays = SimpleList(counts = abundance),
+    colData = metadata,
+    rowData = taxonomy
+)
+
+# We know some bacteria are not present in any samples, so we'll remove those (more details on these later)
+tse_taxa <- subsetByPrevalent(tse_taxa, prevalence = 0)
+
+# How does it look like?
+tse_taxa
+```
+
+# 2. Reading in a phyloseq object
+
+We will recreate the phyloseq object used in the previous material, if it is not in the environment already. Then we can simply convert the phyloseq object into a TreeSummarizedExperiment object with a single command, and check if it is identical with the TSE constructed from the raw data.
+
+All the data in a phyloseq object fits *inside* the TSE object, with room to spare! We will see how this is useful a bit later.
+
+```{r}
+# Check if the phyloseq object exists. Using "!" inverts the result of the "exists()" function
+if (!exists("ps")) {
+# Abundance matrix: rows = species; columns = samples
+abundance_matrix <- abundance[-which(rowSums(abundance) == 0), ] # Remove taxa with 0's across all samples
+
+# Taxonomy matrix
+
+taxonomy_matrix <- as.matrix(
+  taxonomy[, c("kingdom", "phylum", "class", "order",
+               "family", "genus", "species")]
+)
+rownames(taxonomy_matrix) <- taxonomy$species
+
+# Sample metadata
+metadata <- data.frame(
+  sample = colnames(abundance_matrix),
+  product = c("Control", "Control", "A", "A", "B", "B"),
+  replicate = c("R1", "R2", "R1", "R2", "R1", "R2")
+)
+
+metadata$product <- factor(metadata$product,
+                           levels = c("Control", "A", "B"))
+rownames(metadata) <- metadata$sample
+
+# Combine the three parts
+ps <- phyloseq(
+  otu_table(abundance_matrix, taxa_are_rows = TRUE),
+  tax_table(taxonomy_matrix),
+  sample_data(metadata)
+)
+}
+
+ps
+
+# Convert to TSE
+tse_taxa_ps <- convertFromPhyloseq(ps)
+
+# Are the objects identical?
+identical(tse_taxa, tse_taxa_ps)
+
+# There's a terminological issue still in the TSE object, which we will fix here - the data is relabundance, but now its name is "counts"
+names(assays(tse_taxa)) <- "relabundance"
+```
+
+# 3. How to access data
+
+The terminology and access functions are slightly different between phyloseq and TSE. Briefly, the data from your experiment consists of a sampled objects x observed things. In our case, these observed things are microbial taxa identified at the species level. Both the sampled objects (or samples), and taxa might have further data associated with them, such as further chemical data from the samples, or phylogenetic and taxonomic data for the taxa.
+
+TSE handles samples on columns, and taxa on rows. The observations of samples x taxa, in our case relative abundance data, is handled in the "assay" slot. We will now examine how we can access and subset this data.
+
+```{r}
+# The assay slot contains the "otu_table" from phyloseq
+head(assay(tse_taxa, "relabundance"))
+summary(tse_taxa, assay.type = "relabundance")
+
+# Samples can be thought of as columns, so "sample_data" from phyloseq is now in the colData slot
+
+head(colData(tse_taxa))
+
+# Taxa can be thought of as rows, so "tax_table" from phyloseq is now in the rowData slot
+
+head(rowData(tse_taxa))
+
+# The whole object can also be just subset by indexing similar to e.g., data frames. This command gives us the first 5 rows (taxa) and the fifth and sixth columns (samples).
+
+tse_taxa[1:5,c(5,6)]
+
+```
+
+## Exercise 1: Selecting only specific taxa
+
+Let's try to select only the genus Blautia from the TSE object and make it into a new object for further study. Fill in the blanks appropriately.
+
+```{r}
+tse_blautia <- tse_taxa[which(rowData(tse_taxa)$_______ == "________"),]
+tse_blautia
+```
+
+How many different species in the Blautia genus do we find in our samples?
+
+# 4. What use is there from using TSEs?
+
+Phyloseq has been the "industry standard" for over a decade in microbiome research. However, the format is limited, especially with the need to juggle multiple objects. There is also no possibility of adding additional multiomic data layers, such as metabolomics, transcriptomics, and proteomics. TreeSE has been extended to also handle both multiomic and time series data. These are slightly more advanced and complex functionalities, and beyond the scope of this course. Furthermore, there are plenty of ready-made easy to use functions for plotting and analysis, which work directly on the containers.
+
+In the following examples, we will look at a few simple transformations and subsets of the data, and looking for qualitative differences between the sample groups using beta diversity.
+
+Microbiome data is inherently compositional. Some correlations and patterns might emerge or remain hidden in your data only because of how the increased relative abundance of one taxon affect the relative abundance of others. Recently the topic of data transformation has been hotly debated. We will here try one compositional (robust Centered Log-Ratio), and one simple (presence/absence) transform which can be used in further analyses. It should be noted that while presence-absence transformation simplifies it greatly, it is also very robust. No compositional transform has been shown to improve analytical performance in comparison with total sum scaling (relabundance).
+
+```{r}
+# We can summarize the data easily, for example to show which taxa are the most common across sample groups
+summarizeDominance(tse_taxa, assay.type = "relabundance", rank = "genus", group = "product")
+
+# We can also look at the prevalence of common taxa across the samples. Here we defined prevalent as present more than 50% of the samples at detection of over 0.1% of the total reads.
+tse_taxa <- addPrevalentAbundance(tse_taxa, assay.type = "relabundance", prevalence = 0.5, detection = 0.01)
+plotHistogram(tse_taxa, col.var = "prevalent_abundance")
+
+# Next we will perform transformations of the abundance data
+
+# Transform relabundance to Robust Centered Log-Ratio (for compositional analysis) and presence/absence
+tse_taxa <- transformAssay(tse_taxa, assay.type = "relabundance", method = "rclr")
+tse_taxa <- transformAssay(tse_taxa, assay.type = "relabundance", method = "pa")
+
+# First calculate Jaccard dissimilarity from the presence/absence data, which shows how similar or dissimilar the samples are
+tse_taxa <- addDissimilarity(tse_taxa, assay.type = "pa", method = "jaccard")
+
+Heatmap(
+    metadata(tse_taxa)[["jaccard"]],
+    heatmap_legend_param = list(title = "Jaccard dissimilarity")
+)
+
+# Then we will divide the data into common and rare taxa, based on the previously established prevalence and detection thresholds.
+tse_common <- subsetByPrevalent(tse_taxa, assay.type = "relabundance", rank = "species", prevalence = 0.5, detection = 0.1)
+tse_rare <- subsetByRare(tse_taxa, assay.type = "relabundance", rank = "species", prevalence = 0.5, detection = 0.1)
+
+# We will calculate the PCoA for both data, similarly to what we did on the previous lesson, and a compositional beta-diversity metric, called Robust Aitchison Distance
+tse_common <- addMDS(
+    tse_common,
+    FUN = getDissimilarity,
+    method = "bray",
+    assay.type = "relabundance",
+    name = "MDS_bray"
+)
+tse_common <- addMDS(
+    tse_common,
+    FUN = getDissimilarity,
+    method = "euclidean",
+    assay.type = "rclr",
+    name = "MDS_rob_aitchison"
+)
+
+tse_rare <- addMDS(
+    tse_rare,
+    FUN = getDissimilarity,
+    method = "bray",
+    assay.type = "relabundance",
+    name = "MDS_bray"
+)
+
+tse_rare <- addMDS(
+    tse_rare,
+    FUN = getDissimilarity,
+    method = "euclidean",
+    assay.type = "rclr",
+    name = "MDS_rob_aitchison"
+)
+
+# These dissimilarities between the samples are then plotted as four separate objects with relevant titles
+p1 <- plotReducedDim(tse_common, "MDS_bray", colour_by = "product", theme_size=11) + ggtitle("Core species PCoA") 
+p2 <- plotReducedDim(tse_rare, "MDS_bray", colour_by = "product", theme_size=11) + ggtitle("Rare species PCoA")
+p3 <- plotReducedDim(tse_common, "MDS_rob_aitchison", colour_by = "product", theme_size=11) + ggtitle("Core species Robust Aitchison") 
+p4 <- plotReducedDim(tse_rare, "MDS_rob_aitchison", colour_by = "product", theme_size=11) + ggtitle("Rare species Robust Aitchison")
+
+# For easier visual comparison, we are using the "patchwork" package to arrange the plots
+(p1+p2) / (p3+p4)
+```
+
+What can we see from the results? Are there differences between PCoA and Robust Aitchison results? Which beta-diversity plots support the observations from the heatmap (Jaccard dissimilarity)?
+
+## Exercise 2: Simple analysis with one taxon
+
+Let's say we want to look at the differences in the relative abundances of Blautia and Bifidobacterium species. For this, we need to first create a subset object for Bifidobacterium (Blautia object already exists), and plot two heatmaps with Heatmap(). How do the clustering patterns of the samples differ between these taxa?
+
+Enter your code in this box. You can reuse previous code from the examples!
+
+```{r}
+
+```
