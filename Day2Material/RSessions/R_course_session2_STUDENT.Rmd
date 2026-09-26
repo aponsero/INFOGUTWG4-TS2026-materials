@@ -1,0 +1,451 @@
+---
+title: "Basic R Course - Session 2 (Handling tables with dplyr)"
+
+---
+
+
+```{r}
+# install.packages("dplyr")    # only the first time
+
+library(dplyr)
+
+acids <- read.csv("acids.csv")
+
+acids
+dim(acids)     # 6 rows (the samples) and 9 columns
+```
+
+# 1. The 6 dplyr verbs
+
+dplyr is a package for handling tables. It is useful for the things you do with
+data every day: keeping only the rows you want, choosing columns, sorting,
+creating new columns, and calculating summaries per group. You could already do
+most of this with base R in session 1, but dplyr makes it simpler and easier to
+read.
+
+- `filter()` picks ROWS
+- `select()` picks COLUMNS
+- `arrange()` sorts the rows
+- `mutate()` adds a new column
+- `summarise()` reduces to a single number
+- `group_by()` does the above per group
+
+They are all written the same way, and the first argument is ALWAYS the table: `verb(table, what_I_want)`
+
+## filter() -> picks ROWS
+
+You give it a condition and it keeps the rows that meet it. The columns are untouched.
+
+```{r}
+# "give me the rows whose product is B"
+filter(acids, product == "B")
+#   from 6 rows -> 2 remain
+
+# "give me the rows with more than 1000 ug/ml of butyric acid"
+filter(acids, butyric > 1000)
+#   from 6 rows -> 3 remain
+```
+
+CAREFUL: to compare you write a DOUBLE equals sign `==`
+
+### Exercise 1a
+
+Keep only the Control rows.
+
+```{r}
+
+```
+
+
+### Exercise 1b
+
+Now a filter with a number instead of a word: keep only the rows whose acetic acid is above 3000.
+
+```{r}
+
+```
+
+
+## select() -> picks COLUMNS
+
+The opposite of `filter()`. All rows are kept.
+
+```{r}
+# "give me only these two columns"
+select(acids, sample, butyric)
+#   still 6 rows, but out of 9 columns only 2 remain
+
+# A minus sign REMOVES a column
+select(acids, -formic)
+
+# A colon gives a RANGE of columns
+select(acids, formic:citric)
+```
+
+### Exercise 2a
+
+Keep only the columns sample, product and acetic.
+
+```{r}
+
+```
+
+
+### Exercise 2b
+
+Now the other way round: show every column EXCEPT propionic (use the minus sign).
+
+```{r}
+
+```
+
+
+## arrange() -> sorts the rows
+
+It removes nothing and adds nothing, it only changes order.
+
+```{r}
+# sort the samples by butyric acid
+arrange(acids, butyric)          # from lowest to highest
+arrange(acids, desc(butyric))    # desc = highest to lowest
+```
+
+### Exercise 3a
+
+Sort the samples from highest to lowest propionic acid.
+
+```{r}
+
+```
+
+
+### Exercise 3b
+
+Now without `desc()`: sort the samples from lowest to highest formic acid.
+
+```{r}
+
+```
+
+
+## mutate() -> adds a new column
+
+Computes something from the existing columns and sticks it on at the end.
+
+The "good" fatty acids are butyric and propionic:
+
+```{r}
+# add the two "good" acids into a single new column
+mutate(acids, scfa = butyric + propionic)
+#   an scfa column appears at the end: 9 columns -> 10
+#   (scfa = short chain fatty acids)
+```
+
+IMPORTANT: `mutate()` only shows it on screen. To keep it in the table you have to store it with `<-`:
+
+```{r}
+acids <- mutate(acids, scfa = butyric + propionic)
+acids
+```
+
+### Exercise 4a
+
+Create a column `ratio` that is butyric divided by acetic.
+
+```{r}
+
+```
+
+
+### Exercise 4b
+
+Now an easier one, just a sum: create a column `acetic_lactic` that adds acetic and lactic.
+
+```{r}
+
+```
+
+
+
+## summarise() -> reduces to a single number
+
+It condenses all the rows into one.
+
+In session 1 we would have written this:
+
+```{r}
+mean(acids$butyric)
+```
+
+`summarise()` does exactly the same thing, but hands it back as a TABLE, with a column name that we choose:
+
+```{r}
+# the average butyric acid across all 6 samples, as a table
+summarise(acids, mean_butyric = mean(butyric))
+#   from 6 rows -> 1 row
+```
+
+So why bother, if `mean()` already worked? Because of what comes next: `summarise()` can do this per group, and plain `mean()` cannot.
+
+You can ask for several numbers at once:
+
+```{r}
+summarise(acids,
+          mean_butyric   = mean(butyric),
+          mean_propionic = mean(propionic))
+```
+
+### Exercise 5
+
+Calculate the mean acetic acid AND the highest acetic acid of the 6 samples, in one table.
+
+```{r}
+
+```
+
+
+## group_by() -> doing it per group
+
+Everything above gives ONE number for the whole table. But what we actually want is one number for the Control, one for A and one for B, so that we can compare them.
+
+**First, how we would do it BY HAND.** Pick out one product, compute its mean. Then the next one.
+
+```{r}
+control_rows <- filter(acids, product == "Control")
+mean(control_rows$butyric)          # 491.8
+
+a_rows <- filter(acids, product == "A")
+mean(a_rows$butyric)                # 1237.5
+
+b_rows <- filter(acids, product == "B")
+mean(b_rows$butyric)                # 2319.8
+```
+
+It works. But it took 6 lines for 3 products, the results come out loose instead of in a table, and with 20 products it would be unbearable.
+
+**Now the same thing with group_by():**
+
+```{r}
+# average butyric acid per product, in one table
+by_product <- group_by(acids, product)
+summarise(by_product, mean_butyric = mean(butyric))
+```
+
+Same three numbers, in one table, in two lines.
+
+`group_by()` on its own displays nothing new: all it does is mark which rows belong together. The work is done by the `summarise()` that comes after it, which now runs once per group instead of once for the whole table.
+
+### Exercise 6a
+
+Now the same thing, but with PROPIONIC acid: compute its mean per product. Two lines: first group, then summarise.
+
+```{r}
+
+```
+
+
+### Exercise 6b
+
+A different question: how MANY samples does each product have? Use `n()`, which counts the rows in each group.
+
+```{r}
+
+```
+
+
+# 2. Chaining steps
+
+One verb is almost never enough. To do several things in a row you store each step in a variable with `<-` and pass it to the next one. It is like an assembly line.
+
+```{r}
+# step 1: keep only replicate 1's rows
+r1_only <- filter(acids, replicate == 1)   # 6 rows -> 3
+# step 2: from that result, keep three columns
+small   <- select(r1_only, sample, formic, acetic)
+small
+```
+
+The result of step 1 is the input table of step 2. Give them names that say what they contain, not step1/step2.
+
+## The pipe (optional, just so you recognise it)
+
+On the internet you will constantly see the symbol `|>` (or the older `%>%`), the "pipe". It chains the same steps without inventing a name for each one: it takes the table on the left and hands it to the next verb as its first argument.
+
+```{r}
+# exactly the same as the two lines above, but in one line
+acids |> filter(replicate == 1) |> select(sample, formic, acetic)
+```
+
+You do NOT need the pipe for this course. We show it once, actually used, so that it does not startle you when you meet it online.
+
+### Exercise 8
+
+Keep the rows of product B and sort them from highest to lowest butyric acid, storing each step in a variable.
+
+```{r}
+
+```
+
+
+### Exercise 8b (optional: with the pipe)
+
+Redo Exercise 8 in a single line using the pipe `|>`, without storing anything in between.
+
+```{r}
+
+```
+
+### Exercise 09 (two numbers per group)
+
+a) for each product, calculate the mean butyric acid AND the highest butyric acid
+
+```{r}
+
+```
+
+
+### Exercise 10 (filter first, then count)
+
+a) using the `scfa` column, keep only the samples whose `scfa` is above 1000
+b) count how many samples of each product survived
+
+```{r}
+
+```
+
+### Exercise 11
+
+Chaining two verbs, storing each step:
+
+a) keep the rows of replicate 2
+b) sort them from highest to lowest propionic acid
+c) save the result in `output/replicate2_propionic.csv`
+
+```{r}
+
+```
+
+
+### Exercise 12 (everything at once)
+
+a) add a column `scfa` with butyric plus propionic
+b) group by product and calculate the mean `scfa` of each one
+c) sort the result from highest to lowest
+d) save it in `output/scfa_per_product.csv`
+
+```{r}
+
+```
+
+
+
+
+
+# 4. Do the two replicates agree?
+
+Each condition was fermented twice, separately (R1 and R2). Before summarising anything you have to check whether the two give the same answer. If they do, the experiment is reproducible.
+
+**Biological replicate vs technical repetition.** A biological replicate is a real
+repetition of the experiment: two separate fermentation wells, inoculated
+separately and left to ferment on their own. That is the `replicate` column, R1
+and R2. A technical repetition is measuring the same material more than once:
+the `experiment` column of the insulin table. It tells you how good your
+technique is, not how repeatable the biology is. Technical repetitions get
+averaged into a single value; they never increase your sample size. Treating
+them as independent samples inflates n and hands you significance that is not
+real.
+
+We will compare ALL SIX acids, not just one. If we only looked at one, the answer would depend on which one we happened to pick.
+
+**Step 1:** we split the two replicates into two tables.
+
+```{r}
+r1 <- filter(acids, replicate == 1)     # Control_R1, A_R1, B_R1
+r2 <- filter(acids, replicate == 2)     # Control_R2, A_R2, B_R2
+
+r1
+r2
+```
+
+Same products, same columns, same order in both. That is what makes the rest work.
+
+**Step 2:** we keep only the six acid columns of each table.
+
+```{r}
+values_r1 <- select(r1, formic:citric)
+values_r2 <- select(r2, formic:citric)
+
+values_r1
+values_r2
+```
+
+**Step 3:** we compare them, one idea per line.
+
+When you subtract two tables of the same size, R subtracts them cell by cell: the formic of Control_R1 minus the formic of Control_R2, and so on for all 18 numbers.
+
+```{r}
+gap <- abs(values_r1 - values_r2)     # HOW FAR APART the two are
+gap
+```
+
+Why `abs()`? Without it we would get negative numbers whenever R2 is the bigger one. The minus sign only tells us WHICH one was bigger, and we do not care about that: we want to know how far apart they are. `abs()` drops the sign and keeps the size. Try it without `abs()` and compare.
+
+```{r}
+average <- (values_r1 + values_r2) / 2   # the TYPICAL VALUE there
+average
+```
+
+CAREFUL: this is not the mean of an acid across samples. It is the middle point between the two replicates of that one acid in that one condition.
+
+```{r}
+diff_pct <- round(100 * gap / average, 1)   # gap, as a % of the typical value
+diff_pct
+```
+
+And we glue the product names back on, to read it easily:
+
+```{r}
+comparison <- data.frame(product = r1$product, diff_pct)
+comparison
+```
+
+```
+product formic acetic propionic lactic butyric citric
+Control    2.7    4.9      60.1    4.6    37.9    2.9
+      A    0.7   11.7      43.6   29.2    64.3   32.9
+      B   15.7    6.7      25.1    3.7     5.5   14.6
+```
+
+## Reading the table (discussion, no code)
+
+Remember what each number means: "the two replicates differ by this percentage of the normal value". Small = they agree.
+
+a) Look at the three rows. Which product has the most reproducible replicates, that is, the smallest numbers?
+b) Now look at the six columns. Which TWO acids give the biggest numbers in all three products?
+
+# 5. The same thing as a picture
+
+This is how the original paper presented it: a bar for the mean, an error bar for
+the standard deviation, and the individual replicates as dots.
+
+
+**CONCLUSIONS:**
+
+Formic, acetic and lactic acid repeat almost exactly. Propionic and butyric are the noisy ones, in every condition. The authors of the original paper report all these acids descriptively, without statistics: with two wells there is not much else you can honestly do.
+
+The lesson: reproducibility is not the same in every condition or for every measurement, and you have to LOOK at it rather than assume it.
+
+---
+
+# END OF SESSION 2 (dplyr)
+
+- `filter()` picks ROWS (trims vertically)
+- `select()` picks COLUMNS (trims horizontally)
+- `arrange()` sorts
+- `mutate()` adds a column
+- `summarise()` reduces
+- `group_by()` makes summarise work per group
+
+Chain steps by storing each result in a variable. Check the replicates BEFORE summarising them.
+
+(You have also met the pipe `|>` once, in section 2. You do not need it for this course; we just wanted it not to startle you when you see it online.)
