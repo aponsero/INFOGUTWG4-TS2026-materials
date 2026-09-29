@@ -42,13 +42,17 @@ credentials::set_github_pat() # Pastes and saves the token securely
 
 Never push loose files from the desktop. We can use RStudio Projects (.Rproj), which isolate the working directory and make paths relative.
 
-1.  Go to File \> New Project \> New Directory \> New Project. This creates a dedicated folder with an .Rproj file
+1.  Go to File \> New Project \> New Directory \> New Project. 
 
-2.  To initialize Git, choose from the right hand upper corner the name of the project \> Project Options \> Git/SVN \> Version control system "Git"
+2.  Give a name to the folder, like "microbiome_analysis" and point the place for this subdirectory where most convenient for you.
 
-3.  RStudio will need to reboot, and you should then have git enabled.
+3. Check the box "Create a git repository".
+  
+4. Click the button "Create Project". This creates a dedicated folder with an .Rproj file with Git enabled.
 
-You can now find a "Git" tab in the top-right pane of RStudio
+After RStudio opens a new session, you can find a "Git" tab in the top-right pane of RStudio.
+
+If you want to initialize Git for an existing project, choose from the right hand upper corner the name of the project \> Project Options \> Git/SVN \> Version control system "Git".
 
 ### 3. The .gitignore File (Do This Before Pushing!)
 
@@ -125,7 +129,10 @@ The raw data files are not included in this repository, but should be placed in 
 
 ### 7. Adding a license
 
-Licenses are important, when sharing your code in an online repository. They are legal documents with which you define how other people can use (or not use) your code. Let's watch the following videos. <https://www.youtube.com/watch?v=nFU8KoSgEmk> Open Source Software and licenses <https://www.youtube.com/watch?v=srVPLrmlBJY> Creative Commons
+Licenses are important, when sharing your code in an online repository. They are legal documents with which you define how other people can use (or not use) your code. Let's watch the following videos.
+
+<https://www.youtube.com/watch?v=nFU8KoSgEmk> Open Source Software and licenses
+<https://www.youtube.com/watch?v=srVPLrmlBJY> Creative Commons
 
 For this excercise, we'll use the MIT license, which can be conveniently added directly from a template on the GitHub page.
 
